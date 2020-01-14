@@ -50,7 +50,7 @@ const int dout = 2, sckpin = 3;
 HX711_ADC LoadCell(2, 3);
 const int eepromAdress = 0;
 float calValue; // calibration value
-long t;
+long t; 
 
 void setup() {
 	lcd.init();
