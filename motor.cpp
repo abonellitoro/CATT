@@ -1,6 +1,7 @@
 //Motor
-
-class motor{
+//skerri
+// prueba 2	
+class Motor{
 	private:
 			//MOTOR
 		int PUL=13; //Pin para la señal de PULso

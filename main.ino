@@ -8,6 +8,9 @@
 
 // SD
 const int chipSelect = 53;
+String prefix = "log_";
+String filename = prefix + String("000") + String(".txt");
+String realFilename;
 
 // LCD
 const int 	rs = 13, en = 12, d4 = 11, d5 = 10, d6 = 9, d7 = 8 , 
@@ -29,9 +32,6 @@ int Delta_millis;
 int millis_Ant;
 int millis_Now;
 
-// LVDT
-int analogInput = A0;
-int sensorValue = 0;
 
 //MOTOR
 int PUL=13; //Pin para la señal de PULso
@@ -50,7 +50,7 @@ const int dout = 2, sckpin = 3;
 HX711_ADC LoadCell(2, 3);
 const int eepromAdress = 0;
 float calValue; // calibration value
-long t; 
+long t;
 
 void setup() {
 	lcd.init();
@@ -66,6 +66,7 @@ void setup() {
 	// CELDA DE CARGA
 	calValue = 20800.0;
 	Serial.begin(9600);
+	Serial.println(filename);
 	delay(10);
 	Serial.println("Iniciando celda de carga...");
 	LoadCell.begin();
@@ -92,7 +93,9 @@ void setup() {
     	digitalWrite(A0, HIGH);
   		}
   	else {
-  		Serial.println("Inicio correcto");}
+  		Serial.println("Inicio correcto");
+  		realFilename = checkIfSDExists();
+  	}
 	
 			
 	// ENCODER
@@ -156,7 +159,8 @@ void loop() {
 	    digitalWrite(PUL,LOW);
 		unsigned long end = millis();
 		unsigned long delta = end - start;
-		float omega = ANG/(delta/1000.*60.);
+		//float omega = ANG/(delta/1000.*60.);
+		
 		//if(Delta_millis >= Delta*5)
 		lcd.clear();
 		lcd.print("Torque [Nm] ");
@@ -170,38 +174,10 @@ void loop() {
 		desplAng = encoder0Pos/1000.*360.;
 		lcd.print(desplAng);
 		
-
 		// SD Write
-
-		String dataString = "";
-		dataString += String(analogInput);
-		dataString += ",";
-		dataString += String(torque);
-
-		File dataFile = SD.open("datalog.txt", FILE_WRITE);
-		// if the file is available, write to it:
-		if (dataFile) {
-			dataFile.println(dataString);
-			dataFile.close();
-			// print to the serial port too:
-			Serial.println(dataString);
-		}
-		// if the file isn't open, pop up an error:
-		// else {
-		// 	lcd.clear();
-		// 	lcd.println("Error escribiendo archivo");
-		// }
-
-		
-		//float omegaExp = ANG/((PAS*(DUR/1000000.))*60.);
-		//float omegaTeorica = ANG/(PAS*(DUR/10E4));
-		//Serial.print("Velocidad de giro Experimental [RPM]:");
-		//Serial.println(omega);
-		//Serial.print("Velocidad de giro teorica [RPM]:");
-		//Serial.println(omegaTeorica);	
+		writeSD(torque, desplAng);
     }// Loop lento End
     
-//delay(1000);
 }
 
 void doEncoder() {
@@ -219,4 +195,55 @@ void doEncoder() {
 	  }
 
   //Serial.println (encoder0Pos, DEC);
+}
+
+String checkIfSDExists(void){
+	bool sdCardFull = false; 
+	byte num = 0;
+	String strNum;
+	String newfilename;
+	newfilename = filename;
+    while(SD.exists(newfilename) ){
+        Serial.println("existo");
+        if( num == 999 ){          // If the SD card is full
+            sdCardFull = true;
+            }
+	        num++;
+	        newfilename = prefix + getPadded(num) + String(".txt");
+	        Serial.println(newfilename);
+    }
+    return newfilename;
+}
+
+
+void writeSD(float torque, float desplAng){
+	String dataString = "";
+	dataString += String(desplAng);
+	dataString += ",";
+	dataString += String(torque);
+
+	File dataFile = SD.open(realFilename, FILE_WRITE);
+	// if the file is available, write to it:
+	if (dataFile) {
+		dataFile.println(dataString);
+		dataFile.close();
+		// print to the serial port too:
+		Serial.println(dataString);
+}}
+
+
+String getPadded(int num) {
+  char buff[4];
+  char padded[5];
+  
+  //sprintf function will convert the long to a string
+  sprintf(buff, "%.3u", num); // buff will be "01238"
+
+  padded[0] = buff[0];
+  padded[1] = buff[1];
+  padded[2] = buff[2];
+  padded[3] = buff[3];
+  padded[4] = '\0'; // The terminating NULL
+
+  return String(padded);
 }
