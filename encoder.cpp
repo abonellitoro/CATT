@@ -1,10 +1,14 @@
-class Encoder{
-	private:
-		int encoder0PinA = 19;
-		int encoder0PinB = 18;
-		int encoder0Pos = 0;
+#include "encoder.h"
 
-void doEncoder() {
+Encoder::Encoder(int encoder0PinA = 19,
+				int encoder0PinB = 18,
+				int encoder0Pos = 0){
+
+}
+
+
+
+void Encoder::doEncoder(void) {
   //state = !state;
   /* If pinA and pinB are both high or both low, it is spinning
      forward. If they're different, it's going backward.
@@ -21,4 +25,6 @@ void doEncoder() {
   //Serial.println (encoder0Pos, DEC);
 }
 
+int Encoder::getInterruptPin(void){
+	return encoder0PinB;
 }

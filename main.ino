@@ -5,6 +5,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <SPI.h>
 #include <SD.h>
+#include <encoder.h>
 
 // SD
 const int chipSelect = 53;
@@ -19,9 +20,10 @@ const int 	rs = 13, en = 12, d4 = 11, d5 = 10, d6 = 9, d7 = 8 ,
 LiquidCrystal_I2C lcd(0x27,16,2);  //
 
 //ENCODER
-int encoder0PinA = 19;
-int encoder0PinB = 18;
-int encoder0Pos = 0;
+// int encoder0PinA = 19;
+// int encoder0PinB = 18;
+// int encoder0Pos = 0;
+
 
 //int ledPin = A0;
 //volatile byte state = LOW;
@@ -51,6 +53,7 @@ HX711_ADC LoadCell(2, 3);
 const int eepromAdress = 0;
 float calValue; // calibration value
 long t;
+Encoder encoder(void);
 
 void setup() {
 	lcd.init();
@@ -99,9 +102,9 @@ void setup() {
 	
 			
 	// ENCODER
-	pinMode(encoder0PinA, INPUT);
-	pinMode(encoder0PinB, INPUT);
-	attachInterrupt(digitalPinToInterrupt(18), doEncoder, CHANGE);  // encoder pin on interrupt 0 - pin 2
+	// pinMode(encoder0PinA, INPUT);
+	// pinMode(encoder0PinB, INPUT);
+	attachInterrupt(digitalPinToInterrupt(encoder.getInterruptPin()), encoder.doEncoder(), CHANGE);  // encoder pin on interrupt 0 - pin 2
 
 	
 
