@@ -1,14 +1,14 @@
-#include "encoder.h"
+#include "Encoder.h"
 
-Encoder::Encoder(int encoder0PinA = 19,
-				int encoder0PinB = 18,
-				int encoder0Pos = 0){
-
+Encoder::Encoder(int encoder0PinA = 19, 
+	int encoder0PinB = 18,
+	int encoder0Pos = 0){
+	// this->encoder0PinA=encoder0PinA;
+	// this->encoder0PinB=encoder0PinB;
+	// this->encoder0Pos=encoder0Pos;
 }
 
-
-
-void Encoder::doEncoder(void) {
+void Encoder::doEncoder() {
   //state = !state;
   /* If pinA and pinB are both high or both low, it is spinning
      forward. If they're different, it's going backward.
@@ -25,6 +25,10 @@ void Encoder::doEncoder(void) {
   //Serial.println (encoder0Pos, DEC);
 }
 
-int Encoder::getInterruptPin(void){
+int Encoder::getInterruptPin(){
 	return encoder0PinB;
+}
+
+int Encoder::getEncoder0Pos(){
+	return encoder0Pos;
 }

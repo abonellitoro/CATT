@@ -5,7 +5,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <SPI.h>
 #include <SD.h>
-#include <encoder.h>
+#include "Encoder.h"
 
 // SD
 const int chipSelect = 53;
@@ -53,7 +53,7 @@ HX711_ADC LoadCell(2, 3);
 const int eepromAdress = 0;
 float calValue; // calibration value
 long t;
-Encoder encoder(void);
+Encoder encoder();
 
 void setup() {
 	lcd.init();
@@ -104,7 +104,8 @@ void setup() {
 	// ENCODER
 	// pinMode(encoder0PinA, INPUT);
 	// pinMode(encoder0PinB, INPUT);
-	attachInterrupt(digitalPinToInterrupt(encoder.getInterruptPin()), encoder.doEncoder(), CHANGE);  // encoder pin on interrupt 0 - pin 2
+	int attachPin = encoder.getInterruptPin()
+	attachInterrupt(digitalPinToInterrupt(attachPin), encoder.doEncoder(), CHANGE);  // encoder pin on interrupt 0 - pin 2
 
 	
 
@@ -174,7 +175,8 @@ void loop() {
 		lcd.print("Desp: ");
 
 		float desplAng;
-		desplAng = encoder0Pos/1000.*360.;
+		int zeroPos = encoder.getEncoder0Pos();
+		desplAng = zeroPos/1000.*360.;
 		lcd.print(desplAng);
 		
 		// SD Write
@@ -183,7 +185,7 @@ void loop() {
     
 }
 
-void doEncoder() {
+// void doEncoder() {
   //state = !state;
   /* If pinA and pinB are both high or both low, it is spinning
      forward. If they're different, it's going backward.
@@ -191,14 +193,14 @@ void doEncoder() {
      For more information on speeding up this process, see
      [Reference/PortManipulation], specifically the PIND register.
   */
-	  if (digitalRead(encoder0PinA) == digitalRead(encoder0PinB)) {
-	  	encoder0Pos++;
-	  } else {
-	  encoder0Pos--;
-	  }
+	  // if (digitalRead(encoder0PinA) == digitalRead(encoder0PinB)) {
+	  // 	encoder0Pos++;
+	  // } else {
+	  // encoder0Pos--;
+	  // }
 
   //Serial.println (encoder0Pos, DEC);
-}
+//}
 
 String checkIfSDExists(void){
 	bool sdCardFull = false; 
