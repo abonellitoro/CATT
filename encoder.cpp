@@ -1,21 +1,13 @@
+#include <Arduino.h>
 #include "Encoder.h"
 
-Encoder::Encoder(int encoder0PinA = 19, 
-	int encoder0PinB = 18,
-	int encoder0Pos = 0){
+Encoder::Encoder(int encoder0PinA,	int encoder0PinB, int encoder0Pos){
 	// this->encoder0PinA=encoder0PinA;
 	// this->encoder0PinB=encoder0PinB;
 	// this->encoder0Pos=encoder0Pos;
 }
 
 void Encoder::doEncoder() {
-  //state = !state;
-  /* If pinA and pinB are both high or both low, it is spinning
-     forward. If they're different, it's going backward.
-
-     For more information on speeding up this process, see
-     [Reference/PortManipulation], specifically the PIND register.
-  */
 	  if (digitalRead(encoder0PinA) == digitalRead(encoder0PinB)) {
 	  	encoder0Pos++;
 	  } else {
@@ -28,6 +20,11 @@ void Encoder::doEncoder() {
 int Encoder::getInterruptPin(){
 	return encoder0PinB;
 }
+
+// void Encoder::defineInterruptPin(){
+// 		attachInterrupt(digitalPinToInterrupt(18), doEncoder, CHANGE);  // encoder pin on interrupt 0 - pin 2
+
+// }
 
 int Encoder::getEncoder0Pos(){
 	return encoder0Pos;
