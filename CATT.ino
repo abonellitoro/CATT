@@ -7,6 +7,7 @@
 //#include <SD.h>
 #include "Encoder.h"
 #include "SDManager.h"
+#include "Motor.h"
 
 int counter = 0;
 int onOffpin = A1;
@@ -39,10 +40,8 @@ bool DIR = LOW;
 int PULSEpin=13; //Pin para la señal de PULso
 int DIRpin=12; //define Direction pin.
 int ENABLEpin = 11; // ENA
-// float STEPPCYCLE=2000;	// Pasos por vuelta
-//float PAS; 				// Cantidad de pasos que se desea que el motor dé
-//float ANG=360;	// Ángulo de excursión del motor
-//int angularFreq = 10; // En RPM
+
+Motor motor(PULSEpin, DIRpin, ENABLEpin, Delta)
 
 
 //CELDA DE CARGA (1/3)
@@ -65,19 +64,15 @@ void setup() {
 	encoder.init();
 	// CELDA DE CARGA
 	initializeLoadCell();
-
 	//SD
 	sd.initializeSD(lcd, A0);
-
 	// //ENCODER
-	//pinMode(encoder0PinA, INPUT);
-	//pinMode(encoder0PinB, INPUT);
 	attachInterrupt(digitalPinToInterrupt(encoder.getInterruptPin()), paraQueFuncioneLaInterrupcionExterna, CHANGE);  
-
-	// 	MOTOR (2/3)
+	// 	MOTOR
 	initializeMotor();
 
 }
+
 
 void loop() {
 	if(digitalRead(onOffpin)==HIGH){
@@ -110,7 +105,7 @@ void mainFunction(){
 	sd.writeSD(torque, desplAng);
 
 	//////////////// LOOP LENTO //////////////////
-	if(Delta_millis >= Delta)
+	if(Delta_millis >= motor.getDuration())
 		{
 		millis_Ant = millis_Now;
 
@@ -161,14 +156,14 @@ void initializeLCD(void)
 	lcd.display();
 	}
 
-void initializeMotor(void){
-	pinMode (PULSEpin, OUTPUT);
-	pinMode (DIRpin, OUTPUT);
-	pinMode (ENABLEpin, OUTPUT);
-	digitalWrite(ENABLEpin, HIGH);
-	delayMicroseconds(100);
-	digitalWrite(DIRpin,DIR);
-}
+// void initializeMotor(void){
+// 	pinMode (PULSEpin, OUTPUT);
+// 	pinMode (DIRpin, OUTPUT);
+// 	pinMode (ENABLEpin, OUTPUT);
+// 	digitalWrite(ENABLEpin, HIGH);
+// 	delayMicroseconds(100);
+// 	digitalWrite(DIRpin,DIR);
+// }
 
 void initializeLoadCell(void){
 	calValue = 20800.0;
