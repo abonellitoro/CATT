@@ -4,7 +4,6 @@
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
 #include <SPI.h>
-//#include <SD.h>
 #include "Encoder.h"
 #include "SDManager.h"
 #include "Motor.h"
