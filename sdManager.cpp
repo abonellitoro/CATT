@@ -29,6 +29,7 @@ void SDManager::initializeSD(LiquidCrystal_I2C lcd, int pin){
 		realFilename = checkIfSDExists();
 		lcd.clear();
 		lcd.print(realFilename);
+		delay(3000);
 	}
 
 }

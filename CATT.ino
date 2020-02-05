@@ -1,4 +1,3 @@
-//#include <LiquidCrystal.h>
 #include <HX711_ADC.h>
 #include <EEPROM.h>
 #include <Wire.h> 
@@ -10,6 +9,7 @@
 
 int counter = 0;
 int onOffpin = A1;
+float limitAngle = 20.; // ¡Esto también tenés que tocar para limitar el ángulo!
 
 //LOOP LENTO
 int Delta = 32;
@@ -21,16 +21,13 @@ int Delta_millisLCD;
 int millis_AntLCD;
 int millis_NowLCD;
 
-// SD (1/3)
+// SD
 const int chipSelect = 53;
 // String prefix = "log_";
 // String filename = prefix + String("000") + String(".txt");
 // String realFilename;
 SDManager sd(chipSelect);
-// LCD (1/3)
-const int 	rs = 13, en = 12, d4 = 11, d5 = 10, d6 = 9, d7 = 8 , 
-			d0 = 50, d1 = 51, d2 = 52, d3 = 53;
-//LiquidCrystal lcd(rs, en, d0, d1, d2, d3, d4, d5, d6, d7);
+// LCD
 LiquidCrystal_I2C lcd(0x27,16,2);  //
 
 
@@ -39,14 +36,11 @@ bool DIR = LOW;
 int PULSEpin=13; //Pin para la señal de PULso
 int DIRpin=12; //define Direction pin.
 int ENABLEpin = 11; // ENA
+Motor motor(PULSEpin, DIRpin, ENABLEpin, Delta);
 
-Motor motor(PULSEpin, DIRpin, ENABLEpin, Delta)
-
-
-//CELDA DE CARGA (1/3)
+//CELDA DE CARGA 
 const int dout = 2, sckpin = 3;
 HX711_ADC LoadCell(dout, sckpin);
-//const int eepromAdress = 0;
 float calValue; // calibration value
 
 //ENCODER
@@ -57,7 +51,6 @@ Encoder encoder(encoder0PinA,encoder0PinB, encoder0Pos);
 
 void setup() {
 
-	Serial.begin(9600);
 	// LCD
 	initializeLCD();
 	encoder.init();
@@ -68,14 +61,13 @@ void setup() {
 	// //ENCODER
 	attachInterrupt(digitalPinToInterrupt(encoder.getInterruptPin()), paraQueFuncioneLaInterrupcionExterna, CHANGE);  
 	// 	MOTOR
-	initializeMotor();
+	//initializeMotor();
 
 }
 
-
 void loop() {
 	if(digitalRead(onOffpin)==HIGH){
-		while (counter<=3){
+		while (counter<=5){
 			mainFunction();
 			}
 	lcd.clear();
@@ -93,14 +85,13 @@ void mainFunction(){
 	millis_NowLCD = millis();
   	Delta_millisLCD = millis_NowLCD - millis_AntLCD;
 
-	//////////////// LOOP RÁPIDO //////////////////
-	
-  	//CELDA DE CARGA (3/3)
+	  	//CELDA DE CARGA 
 	LoadCell.update();
 	float torque = LoadCell.getData();
 	float desplAng;
-	desplAng = encoder0Pos/1000.*360.;
+	desplAng = encoder0Pos/1000.*360./3.;
 	
+	//SD
 	sd.writeSD(torque, desplAng);
 
 	//////////////// LOOP LENTO //////////////////
@@ -124,13 +115,13 @@ void mainFunction(){
 		}
 		
 		// CAMBIO DE SENTIDO
-		if (desplAng>20.){
-			DIR = HIGH;
+		if (desplAng>limitAngle){
+			DIR = LOW;
 			digitalWrite(DIRpin, DIR);
 		}
-		if (desplAng<-20.){
+		if (desplAng<-limitAngle){
 			bool auxDIR = DIR;
-			DIR = LOW;
+			DIR = HIGH;
 			digitalWrite(DIRpin,DIR);
 			if (auxDIR!= DIR){
 				counter++;
