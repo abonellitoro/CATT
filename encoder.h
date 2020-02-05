@@ -10,7 +10,8 @@ class Encoder {
 
 	public:
 		Encoder(int encoder0PinA, int encoder0PinB, int encoder0Pos);
-		void doEncoder();
+		void init();
+		int doEncoder();
 		int getInterruptPin();
 		int getEncoder0Pos();
 		//void defineInterruptPin();

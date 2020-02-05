@@ -1,14 +1,36 @@
 #include "SDManager.h"
 #include <SD.h>
+#include "LiquidCrystal_I2C.h"
 
 SDManager::SDManager(int chipSelect) {
-		prefix = "log_";
-		filename = prefix + String("000") + String(".txt");
-		chipSelect = chipSelect;
+		this->prefix = "log_";
+		this->filename = prefix + String("000") + String(".txt");
+		this->chipSelect = chipSelect;
+		String realFilename;
 }
 
 bool SDManager::begin(void){
 	return SD.begin(chipSelect);
+}
+
+void SDManager::initializeSD(LiquidCrystal_I2C lcd, int pin){
+	if (!begin()) {
+		lcd.clear();
+		lcd.print("La SD fallo");
+		lcd.setCursor(0, 1);
+		lcd.print("Revisar conexiones");
+
+		delay(8000);
+		lcd.clear();
+		digitalWrite(pin, HIGH);
+		}
+	else {
+		//Serial.println("Inicio correcto");
+		realFilename = checkIfSDExists();
+		lcd.clear();
+		lcd.print(realFilename);
+	}
+
 }
 
 String SDManager::checkIfSDExists(void){
@@ -60,3 +82,5 @@ String SDManager::getPadded(int num) {
 
   return String(padded);
 }
+
+

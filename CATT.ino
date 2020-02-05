@@ -25,7 +25,7 @@ int millis_NowLCD;
 const int chipSelect = 53;
 // String prefix = "log_";
 // String filename = prefix + String("000") + String(".txt");
-String realFilename;
+// String realFilename;
 SDManager sd(chipSelect);
 // LCD (1/3)
 const int 	rs = 13, en = 12, d4 = 11, d5 = 10, d6 = 9, d7 = 8 , 
@@ -34,21 +34,21 @@ const int 	rs = 13, en = 12, d4 = 11, d5 = 10, d6 = 9, d7 = 8 ,
 LiquidCrystal_I2C lcd(0x27,16,2);  //
 
 
-
 //MOTOR (1/3)
 bool DIR = LOW;
 int PULSEpin=13; //Pin para la señal de PULso
 int DIRpin=12; //define Direction pin.
 int ENABLEpin = 11; // ENA
-float STEPPCYCLE=2000;	// Pasos por vuelta
+// float STEPPCYCLE=2000;	// Pasos por vuelta
 //float PAS; 				// Cantidad de pasos que se desea que el motor dé
-float ANG=360;	// Ángulo de excursión del motor
-int angularFreq = 10; // En RPM
+//float ANG=360;	// Ángulo de excursión del motor
+//int angularFreq = 10; // En RPM
+
 
 //CELDA DE CARGA (1/3)
 const int dout = 2, sckpin = 3;
-HX711_ADC LoadCell(2, 3);
-const int eepromAdress = 0;
+HX711_ADC LoadCell(dout, sckpin);
+//const int eepromAdress = 0;
 float calValue; // calibration value
 
 //ENCODER
@@ -58,69 +58,31 @@ int encoder0Pos = 0;
 Encoder encoder(encoder0PinA,encoder0PinB, encoder0Pos);
 
 void setup() {
-	lcd.init();
-	lcd.backlight();
-	
-// LCD
-	//lcd.begin(16, 2);
-  	lcd.print("Medicion de");
-  	lcd.setCursor(0, 1);
-  	lcd.print("Torque");
-	lcd.display();
 
+	Serial.begin(9600);
+	// LCD
+	initializeLCD();
+	encoder.init();
 	// CELDA DE CARGA
-	calValue = 20800.0;
-	// Serial.begin(9600);
-	// Serial.println(filename);
-	delay(10);
-	//Serial.println("Iniciando celda de carga...");
-	LoadCell.begin();
-	long stabilisingtime = 2000; // tare preciscion can be improved by adding a few seconds of stabilising time
-	LoadCell.start(stabilisingtime);
-	if(LoadCell.getTareTimeoutFlag()) {
-		//Serial.println("Tare timeout, check MCU>HX711 wiring and pin designations");
-		}
-	else {
-		LoadCell.tare();
-		LoadCell.setCalFactor(calValue); // set calibration value (float)
-		//LoadCell.setGain(gain); // 
-		//Serial.println("Startup + tare is complete");
-		}
+	initializeLoadCell();
 
-	if (!sd.begin()) {
-		lcd.clear();
-    	lcd.print("La SD fallo");
-    	lcd.setCursor(0, 1);
-  		lcd.print("Revisar conexiones");
+	//SD
+	sd.initializeSD(lcd, A0);
 
-    	delay(8000);
-    	lcd.clear();
-    	digitalWrite(A0, HIGH);
-  		}
-  	else {
-  		//Serial.println("Inicio correcto");
-  		realFilename = sd.checkIfSDExists();
-  		lcd.clear();
-  		lcd.print(realFilename);
-  	}
-
+	// //ENCODER
+	//pinMode(encoder0PinA, INPUT);
+	//pinMode(encoder0PinB, INPUT);
 	attachInterrupt(digitalPinToInterrupt(encoder.getInterruptPin()), paraQueFuncioneLaInterrupcionExterna, CHANGE);  
-	
 
 	// 	MOTOR (2/3)
-	pinMode (PULSEpin, OUTPUT);
-	pinMode (DIRpin, OUTPUT);
-	pinMode (ENABLEpin, OUTPUT);
-	digitalWrite(ENABLEpin, HIGH);
-	delayMicroseconds(100);
-	digitalWrite(DIRpin,DIR);
+	initializeMotor();
 
 }
 
 void loop() {
 	if(digitalRead(onOffpin)==HIGH){
 		while (counter<=3){
-			doAllFunction();
+			mainFunction();
 			}
 	lcd.clear();
 	lcd.print("Terminado");
@@ -131,27 +93,20 @@ void loop() {
 }
 
 
-void doAllFunction(){
-	//Serial.println("Rapido");
+void mainFunction(){
 	millis_Now = millis();
   	Delta_millis = millis_Now - millis_Ant;
 	millis_NowLCD = millis();
   	Delta_millisLCD = millis_NowLCD - millis_AntLCD;
 
-	///////////////////////////////////////////////
 	//////////////// LOOP RÁPIDO //////////////////
-	///////////////////////////////////////////////
 	
   	//CELDA DE CARGA (3/3)
 	LoadCell.update();
-	//  LoadCell.setGain(gain);
-
-	//get smoothed value from data set
-	//	if (millis() > t + 250) {
 	float torque = LoadCell.getData();
 	float desplAng;
 	desplAng = encoder0Pos/1000.*360.;
-	// SD Write
+	
 	sd.writeSD(torque, desplAng);
 
 	//////////////// LOOP LENTO //////////////////
@@ -159,14 +114,10 @@ void doAllFunction(){
 		{
 		millis_Ant = millis_Now;
 
-		//////////////// MOTOR/////////////////////
+		//MOTOR
 		digitalWrite(PULSEpin,HIGH);
 	    digitalWrite(PULSEpin,LOW);
 
-
-		// LO CAMBIÉ ARRIBA PARA QUE ADQUIERA LA MAYOR CANTIDAD DE DATOS POSIBLE
-		// float desplAng;
-		// desplAng = encoder0Pos/1000.*360.;
 
 		if(Delta_millisLCD >= Delta*8)  {
 			millis_AntLCD = millis_NowLCD;
@@ -196,5 +147,65 @@ void doAllFunction(){
 }	
 
 void paraQueFuncioneLaInterrupcionExterna(){
-	encoder.doEncoder();
+	encoder0Pos = encoder.doEncoder();
+	// Serial.println(str);
 }
+
+void initializeLCD(void)
+	{
+	lcd.init();
+	lcd.backlight();
+  	lcd.print("Medicion de");
+  	lcd.setCursor(0, 1);
+  	lcd.print("Torque");
+	lcd.display();
+	}
+
+void initializeMotor(void){
+	pinMode (PULSEpin, OUTPUT);
+	pinMode (DIRpin, OUTPUT);
+	pinMode (ENABLEpin, OUTPUT);
+	digitalWrite(ENABLEpin, HIGH);
+	delayMicroseconds(100);
+	digitalWrite(DIRpin,DIR);
+}
+
+void initializeLoadCell(void){
+	calValue = 20800.0;
+	/* Serial.begin(9600);
+	Serial.println(filename);
+	delay(10);
+	Serial.println("Iniciando celda de carga...");*/
+	LoadCell.begin();
+	long stabilisingtime = 2000; // tare preciscion can be improved by adding a few seconds of stabilising time
+	LoadCell.start(stabilisingtime);
+	if(LoadCell.getTareTimeoutFlag()) {
+		//Serial.println("Tare timeout, check MCU>HX711 wiring and pin designations");
+	}
+	else {
+		LoadCell.tare();
+		LoadCell.setCalFactor(calValue); // set calibration value (float)
+		//LoadCell.setGain(gain); // 
+		//Serial.println("Startup + tare is complete");
+	}
+}
+
+// void initializeSD(){
+// 	if (!sd.begin()) {
+// 		lcd.clear();
+// 		lcd.print("La SD fallo");
+// 		lcd.setCursor(0, 1);
+// 		lcd.print("Revisar conexiones");
+
+// 		//delay(8000);
+// 		lcd.clear();
+// 		digitalWrite(A0, HIGH);
+// 		}
+// 	else {
+// 		//Serial.println("Inicio correcto");
+// 		realFilename = sd.checkIfSDExists();
+// 		lcd.clear();
+// 		lcd.print(realFilename);
+// 	}
+
+// }
